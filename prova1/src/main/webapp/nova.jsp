@@ -26,19 +26,19 @@
 
  	<div class="container-aula-edit" id="msg-data" hidden="hidden">
     	<div class="texto">
-    		DData inválida. Utilize o formato YYYY-MM-DD.
+    		Data inválida.
     	</div>
 	</div>
 		
 	<div class="container-aula-edit" id="msg-horario" hidden="hidden">
    		<div class="texto">
-            Horário inválido. Utilize o formato HH:MM.
+            Horário inválido. 
         </div>
 	</div>
 		
 	<div class="container-aula-edit" id="msg-duracao" hidden="hidden">
     	<div class="texto">
-            Duração inválida. Deve ser um valor positivo.
+            Duração inválida. 
         </div>
 	</div>
     
