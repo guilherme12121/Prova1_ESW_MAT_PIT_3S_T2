@@ -37,13 +37,12 @@ public class Db {
 	private void confDB() {
 		try {
 			this.driver = "org.h2.Driver";
-			this.url = "jdbc:h2:mem:testdb";
+			this.url = "jdbc:h2:~/testdb";
 			this.user = "sa";
 			this.password = "";
 			Class.forName(this.driver);
-		} catch (Exception e) {
-			// TODO: o que fazer se algo deu errado
-			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+		    System.err.println("Class not found: " + e.getMessage());
 		}
 	}
 
@@ -51,13 +50,13 @@ public class Db {
 	private void conectar() {
 		try {
 			this.connection = DriverManager.getConnection(this.url, this.user, this.password);
-		} catch (Exception e) {
-			// TODO: o que fazer se algo deu errado
+		} catch (SQLException e) {
+			 System.err.println("Class not found: " + e.getMessage());	
 		}
 	}
 
 	private void criarTabela() {
-		String query = "CREATE TABLE AULA ("
+		String db = "CREATE TABLE IF NOT EXISTS AULA ("
 				+ "    ID BIGINT AUTO_INCREMENT PRIMARY KEY,"
 				+ "    COD_DISCIPLINA INT,"
 				+ "    ASSUNTO VARCHAR(255),"
@@ -67,10 +66,10 @@ public class Db {
 				+ ")";
 		try {
 			Statement statement = this.connection.createStatement();
-			statement.executeUpdate(query);
+			statement.executeUpdate(db);
 			this.connection.commit();
-		} catch (Exception e) {
-			// TODO: o que fazer se algo deu errado
+		} catch (SQLException e) {
+			 System.err.println("Class not found: " + e.getMessage());
 		}
 	}
 
@@ -79,9 +78,31 @@ public class Db {
 		try {
 			this.connection.close();
 		} catch (SQLException e) {
-			// TODO: o que fazer se algo deu errado
+			 System.err.println("Class not found: " + e.getMessage());	
 		}
 	}
+	
+	//Para poder encerrar o Statement
+		private static void closeStatement(Statement statement) {
+			if(statement != null) {
+				try {
+					statement.close();
+				} catch (SQLException e) {
+					 System.err.println("Class not found: " + e.getMessage());
+				}
+			}
+		}
+		
+		//Para poder encerrar o ResultSet
+		private static void closeResultSet(ResultSet result) {
+			if(result != null) {
+				try {
+					result.close();
+				} catch (SQLException e) {
+					 System.err.println("Class not found: " + e.getMessage());
+				}
+			}
+		}
 
 	/*
 	 * ****************************************************************
@@ -90,109 +111,159 @@ public class Db {
 	 */
 
 	// CRUD READ
-	public ArrayList<AulaDto> findAll() {
-		String query = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA;";
-		ArrayList<AulaDto> lista = new ArrayList<AulaDto>();
-		/*
-		 * 	Aqui você  usa a query acima para obter todos os registros na tabela.
-		 * 	Mas, lembre-se de que você precisa obter cada registro um por um a partir do
-		 * 	result set.
-		 */
-		return lista;
-	}
+		public ArrayList<AulaDto> findAll() {
+		    PreparedStatement preparedStatement = null;
+		    ResultSet result = null;
+		    String db = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA;";
+		    ArrayList<AulaDto> lista = new ArrayList<AulaDto>();
+		    try {
+		        preparedStatement = connection.prepareStatement(db);
+		        result = preparedStatement.executeQuery();
 
-	public AulaDto findById(String id) {
-		String query = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA "
-				+ "WHERE ID = ?";
-		/*
-		 * 	Use a query acima para encontrar o registro associado ao id fornecido
-		 * 	mas considere a possibilidade do id não constar no banco.
-		 * 	Uma dica. Em vez de construir inicialmente o DTO a partir do banco,
-		 * 	crie um objeto Aula e depois crie um DTO usando a aula no construtor.
-		 * 	Consulte a classe AulaDto para ver uma razão para isso. Há um atributo de
-		 * 	AulaDto necessário para exibição no navegador que a classe Aula não tem.
-		 */
-		return null;
-	}
+		        while (result.next()) {
+		            Aula aula = instantiateAula(result);
+		            AulaDto aulaDto = new AulaDto(aula);
+		            lista.add(aulaDto);
+		        }
+
+		        return lista;
+		    } catch (SQLException e) {
+		        System.err.println("SQL Error: " + e.getMessage());
+		    } finally {
+		        closeResultSet(result);
+		        closeStatement(preparedStatement);
+		    }
+		    return lista;
+		}
+
+
+		public AulaDto findById(String id) {
+		    PreparedStatement preparedStatement = null;
+		    ResultSet result = null;
+		    String db = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA WHERE ID = ?";
+
+		    try {
+		        preparedStatement = connection.prepareStatement(db);
+		        preparedStatement.setString(1, id);
+
+		        result = preparedStatement.executeQuery();
+
+		        if (result.next()) {
+		            Aula aula = instantiateAula(result);
+		            AulaDto aulaDto = new AulaDto(aula);
+		            return aulaDto;
+		        }
+
+		        return null;
+
+		    } catch (SQLException e) {
+		        System.err.println("SQL Error: " + e.getMessage());
+		    } finally {
+		        closeResultSet(result);
+		        closeStatement(preparedStatement);
+		    }
+		    return null;
+		}
 
 	// CRUD CREATAE
 	public void create(AulaDto dto) {
-		String query = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
+		PreparedStatement prepare = null;
+		String db = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
 				+ "VALUES (?,?,?,?,?)";
-		/*
-		 * 	Crie um PreparedStatement que inclua todos os campos a serem registrados na
-		 * 	tabela. Lembre-se de que a contagem dos parâmetros (?) começa em 1.
-		 * 	Observe o método delete abaixo. Pode ser útil.
-		 */
+		try {
+			 Aula aula = new Aula(dto);
+
+		        prepare = this.connection.prepareStatement(db);
+
+		        prepare.setInt(1, aula.getCodDisciplina());
+		        prepare.setString(2, aula.getAssunto());
+		        prepare.setInt(3, aula.getDuracao());
+		        prepare.setString(4, aula.getData());
+		        prepare.setString(5, aula.getHorario());
+		        prepare.execute();
+		} catch (SQLException e) {
+			System.err.println("Class not found: " + e.getMessage());
+		} finally {
+			closeStatement(prepare);
+		}
 	}
 
 	// CRUD DELETE
 	public void deleteAll() {
-		String query = "DELETE FROM AULA";
+		String db = "DELETE FROM AULA";
+		Statement statement = null;
 		try {
-			Statement st = this.connection.createStatement();
-			st.execute(query);
-		} catch (Exception e) {
-			// TODO: o que fazer se deu errado
+			statement = this.connection.createStatement();
+			statement.execute(db);
+		} catch (SQLException e) {
+			e.getStackTrace();
+			System.err.println("Class not found: " + e.getMessage());
+		}
+		finally {
+			closeStatement(statement);
 		}
 	}
 
 	// CRUD DELETE
 	public void delete(String id) {
-		String query = "DELETE FROM AULA WHERE ID = ?";
+		String db = "DELETE FROM AULA WHERE ID = ?";
+		PreparedStatement prepare = null;
 		try {
-			PreparedStatement pst = this.connection.prepareStatement(query);
-			pst.setString(1, id);
-			pst.execute();
-		} catch (Exception e) {
-			// TODO: o que fazer se algo deu errado
-		}
+			prepare = this.connection.prepareStatement(db);
+			prepare.setString(1, id);
+			prepare.execute();
+		} catch (SQLException e) {
+			System.err.println("Class not found: " + e.getMessage());
+		} finally {
+	        closeStatement(prepare);
+	    }
 	}
 
 	// CRUD UPDATE
 	public void update(AulaDto dto) {
-		String query = "UPDATE AULA SET "
+		PreparedStatement preparedStatement = null;
+		String db = "UPDATE AULA SET "
 				+ "COD_DISCIPLINA = ?, ASSUNTO = ?, DURACAO = ?, DATA = ?, HORARIO = ? "
 				+ "WHERE ID = ?";
-		/*
-		 * 	Use os atributos do DTO para atualizar o dado associado ao id.
-		 * 	Use PreparedStatement, lembrando que a contagem dos parâmetros (?)
-		 * 	começa em 1.
-		 */
-	}
+		
+		 try {
+		        preparedStatement = this.connection.prepareStatement(db);
+		        preparedStatement.setInt(1, Integer.parseInt(dto.codDisciplina)); 
+		        preparedStatement.setString(2, dto.assunto); 
+		        preparedStatement.setInt(3, Integer.parseInt(dto.duracao)); 
+		        preparedStatement.setString(4, dto.data);
+		        preparedStatement.setString(5, dto.horario);
+		        preparedStatement.setString(6, dto.id);
+		        preparedStatement.executeUpdate();
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		        System.err.println("Class not found: " + e.getMessage());
+		    } finally {
+		        closeStatement(preparedStatement);
+		    }
+		}
+	
+	
+	//Método criado para poder instanciar a classe Aula de forma mais organizada, sem ter que fazer isso em cada método
+		private Aula instantiateAula(ResultSet result) throws SQLException{
+			Aula aula = new Aula();
+			aula.setAssunto(result.getString("ASSUNTO"));
+			aula.setCodDisciplina(result.getInt("COD_DISCIPLINA"));
+			aula.setData(result.getString("DATA"));
+			aula.setDuracao(result.getInt("DURACAO"));
+			aula.setHorario(result.getString("HORARIO"));
+			aula.setId(result.getLong("ID"));
+			return aula;
+		}
 
 	/*
 	 * PARA EFEITO DE TESTES
 	 */
 
-	public void reset() {
-		this.deleteAll();
-		this.popularTabela();
+		public void reset() {
+			this.deleteAll();
+		}
+	
+		
+
 	}
-
-	public void popularTabela() {
-		AulaDto dto = new AulaDto();
-
-		dto.codDisciplina = "1";
-		dto.assunto = "Derivadas";
-		dto.duracao = "2";
-		dto.data = "2024-04-12";
-		dto.horario = "14:00";
-		this.create(dto);
-
-		dto.codDisciplina = "3";
-		dto.assunto = "Coordenadas Cartesianas";
-		dto.duracao = "2";
-		dto.data = "2024-04-13";
-		dto.horario = "14:00";
-		this.create(dto);
-
-		dto.codDisciplina = "4";
-		dto.assunto = "O Problema dos Três Corpos";
-		dto.duracao = "4";
-		dto.data = "2024-04-14";
-		dto.horario = "14:00";
-		this.create(dto);
-	}
-
-}
