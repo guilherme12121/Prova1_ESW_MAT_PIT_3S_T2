@@ -56,7 +56,7 @@ public class Db {
 	}
 
 	private void criarTabela() {
-		String db = "CREATE TABLE IF NOT EXISTS AULA ("
+		String tabela = "CREATE TABLE IF NOT EXISTS AULA ("
 				+ "    ID BIGINT AUTO_INCREMENT PRIMARY KEY,"
 				+ "    COD_DISCIPLINA INT,"
 				+ "    ASSUNTO VARCHAR(255),"
@@ -66,7 +66,7 @@ public class Db {
 				+ ")";
 		try {
 			Statement statement = this.connection.createStatement();
-			statement.executeUpdate(db);
+			statement.executeUpdate(tabela);
 			this.connection.commit();
 		} catch (SQLException e) {
 			 System.err.println("Class not found: " + e.getMessage());
@@ -110,10 +110,10 @@ public class Db {
 		public ArrayList<AulaDto> findAll() {
 		    PreparedStatement preparedStatement = null;
 		    ResultSet result = null;
-		    String db = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA;";
+		    String tabela = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA;";
 		    ArrayList<AulaDto> lista = new ArrayList<AulaDto>();
 		    try {
-		        preparedStatement = connection.prepareStatement(db);
+		        preparedStatement = connection.prepareStatement(tabela);
 		        result = preparedStatement.executeQuery();
 
 		        while (result.next()) {
@@ -136,10 +136,10 @@ public class Db {
 		public AulaDto findById(String id) {
 		    PreparedStatement preparedStatement = null;
 		    ResultSet result = null;
-		    String db = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA WHERE ID = ?";
+		    String tabela = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA WHERE ID = ?";
 
 		    try {
-		        preparedStatement = connection.prepareStatement(db);
+		        preparedStatement = connection.prepareStatement(tabela);
 		        preparedStatement.setString(1, id);
 
 		        result = preparedStatement.executeQuery();
@@ -164,12 +164,12 @@ public class Db {
 	
 	public void create(AulaDto dto) {
 		PreparedStatement prepare = null;
-		String db = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
+		String tabela = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
 				+ "VALUES (?,?,?,?,?)";
 		try {
 			 Aula aula = new Aula(dto);
 
-		        prepare = this.connection.prepareStatement(db);
+		        prepare = this.connection.prepareStatement(tabela);
 
 		        prepare.setInt(1, aula.getCodDisciplina());
 		        prepare.setString(2, aula.getAssunto());
@@ -186,11 +186,11 @@ public class Db {
 
 	
 	public void deleteAll() {
-		String db = "DELETE FROM AULA";
+		String tabela = "DELETE FROM AULA";
 		Statement statement = null;
 		try {
 			statement = this.connection.createStatement();
-			statement.execute(db);
+			statement.execute(tabela);
 		} catch (SQLException e) {
 			e.getStackTrace();
 			System.err.println("Class not found: " + e.getMessage());
@@ -202,10 +202,10 @@ public class Db {
 
 	
 	public void delete(String id) {
-		String db = "DELETE FROM AULA WHERE ID = ?";
+		String tabela = "DELETE FROM AULA WHERE ID = ?";
 		PreparedStatement prepare = null;
 		try {
-			prepare = this.connection.prepareStatement(db);
+			prepare = this.connection.prepareStatement(tabela);
 			prepare.setString(1, id);
 			prepare.execute();
 		} catch (SQLException e) {
@@ -218,12 +218,12 @@ public class Db {
 	
 	public void update(AulaDto dto) {
 		PreparedStatement preparedStatement = null;
-		String db = "UPDATE AULA SET "
+		String tabela = "UPDATE AULA SET "
 				+ "COD_DISCIPLINA = ?, ASSUNTO = ?, DURACAO = ?, DATA = ?, HORARIO = ? "
 				+ "WHERE ID = ?";
 		
 		 try {
-		        preparedStatement = this.connection.prepareStatement(db);
+		        preparedStatement = this.connection.prepareStatement(tabela);
 		        preparedStatement.setInt(1, Integer.parseInt(dto.codDisciplina)); 
 		        preparedStatement.setString(2, dto.assunto); 
 		        preparedStatement.setInt(3, Integer.parseInt(dto.duracao)); 
