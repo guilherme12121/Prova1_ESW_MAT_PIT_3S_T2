@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import db.Db;
-
+import db.DbException;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -26,7 +26,7 @@ public class ControllerServlet extends HttpServlet {
 		super();
 	}
 	
-	
+
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		Db db = Db.getInstance();
@@ -43,13 +43,12 @@ public class ControllerServlet extends HttpServlet {
 			RequestDispatcher rd = request.getRequestDispatcher("edit.jsp");
 			rd.forward(request, response);
 		}else {
-		
+
 			out.print(db.findAll());
 		}
 	}
 
-	
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+		protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
         String op = request.getParameter("op");
@@ -109,7 +108,6 @@ public class ControllerServlet extends HttpServlet {
         db.delete(id);
     }
 
-	
 	private void getAula(HttpServletRequest request, HttpServletResponse response, Db db) throws IOException {
 	    String id = request.getParameter("id");
 	    AulaDto dto = db.findById(id);
@@ -127,10 +125,9 @@ public class ControllerServlet extends HttpServlet {
 	        response.getWriter().write(json);
 	    } catch (IOException e) {
 	        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-	        response.getWriter().write("Ocorreu um erro ao processar sua solicitação: " + e.getMessage());
+	        response.getWriter().write("Erro ao processar a requisição: " + e.getMessage());
 	    }
 	}
-	
 	
 	private void update(HttpServletRequest request, Db db) {
         String id = request.getParameter("id");
