@@ -21,14 +21,7 @@
 		
 		<%
 		HttpSession sessao = request.getSession();
-		// Aqui você vai precisar recuperar dados na sessão.
-		// Abaixo, vai trocar 'false' pela condição que identifica dados na sessão.
 		if (sessao.getAttribute("lista") != null) {
-			// Aqui, você cria uma estrutura de dados com os dto's que contém os atributos
-			// de cada uma das aulas. Os atributos devem ser inseridos no código html abaixo
-			// em lugares apropriados. << remova new ArrayList() >> e o sibstitua pelo código correto.
-			// Note que parâmetros devem ser enviados em editarAula() e deleta().
-			// Se tiver dúvida, confira uma das outras páginas jsp.
 			ArrayList<AulaDto> lista = (ArrayList<AulaDto>) sessao.getAttribute("lista");
 			for (AulaDto a: lista) {
 				%>
