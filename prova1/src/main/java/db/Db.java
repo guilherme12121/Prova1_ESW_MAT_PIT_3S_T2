@@ -37,26 +37,25 @@ public class Db {
 	private void confDB() {
 		try {
 			this.driver = "org.h2.Driver";
-			this.url = "jdbc:h2:~/testdb";
+			this.url = "jdbc:h2:~/testeSLA";
 			this.user = "sa";
 			this.password = "";
 			Class.forName(this.driver);
 		} catch (ClassNotFoundException e) {
-		    System.err.println("Class not found: " + e.getMessage());
+			throw new DbException(e.getMessage());
 		}
 	}
 
-	
 	private void conectar() {
 		try {
 			this.connection = DriverManager.getConnection(this.url, this.user, this.password);
 		} catch (SQLException e) {
-			 System.err.println("Class not found: " + e.getMessage());	
+			throw new DbException(e.getMessage());	
 		}
 	}
 
 	private void criarTabela() {
-		String tabela = "CREATE TABLE IF NOT EXISTS AULA ("
+		String query = "CREATE TABLE IF NOT EXISTS AULA ("
 				+ "    ID BIGINT AUTO_INCREMENT PRIMARY KEY,"
 				+ "    COD_DISCIPLINA INT,"
 				+ "    ASSUNTO VARCHAR(255),"
@@ -66,193 +65,182 @@ public class Db {
 				+ ")";
 		try {
 			Statement statement = this.connection.createStatement();
-			statement.executeUpdate(tabela);
+			statement.executeUpdate(query);
 			this.connection.commit();
 		} catch (SQLException e) {
-			 System.err.println("Class not found: " + e.getMessage());
+			throw new DbException(e.getMessage());
 		}
 	}
 
-	
 	public void close() {
 		try {
 			this.connection.close();
 		} catch (SQLException e) {
-			 System.err.println("Class not found: " + e.getMessage());	
+			throw new DbException(e.getMessage());	
 		}
 	}
 	
-	
-		private static void closeStatement(Statement statement) {
-			if(statement != null) {
+		private static void closeStatement(Statement st) {
+			if(st != null) {
 				try {
-					statement.close();
+					st.close();
 				} catch (SQLException e) {
-					 System.err.println("Class not found: " + e.getMessage());
+					throw new DbException(e.getMessage());
 				}
 			}
 		}
 		
-		
-		private static void closeResultSet(ResultSet result) {
-			if(result != null) {
+		private static void closeResultSet(ResultSet rs) {
+			if(rs != null) {
 				try {
-					result.close();
+					rs.close();
 				} catch (SQLException e) {
-					 System.err.println("Class not found: " + e.getMessage());
+					throw new DbException(e.getMessage());
 				}
 			}
 		}
 
-	
+	public ArrayList<AulaDto> findAll() {
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			String query = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA;";
+			ArrayList<AulaDto> lista = new ArrayList<AulaDto>();
+			try {
+				ps = connection.prepareStatement(query);
+				rs= ps.executeQuery();
 
-	
-		public ArrayList<AulaDto> findAll() {
-		    PreparedStatement preparedStatement = null;
-		    ResultSet result = null;
-		    String tabela = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA;";
-		    ArrayList<AulaDto> lista = new ArrayList<AulaDto>();
-		    try {
-		        preparedStatement = connection.prepareStatement(tabela);
-		        result = preparedStatement.executeQuery();
 
-		        while (result.next()) {
-		            Aula aula = instantiateAula(result);
-		            AulaDto aulaDto = new AulaDto(aula);
-		            lista.add(aulaDto);
-		        }
+				while(rs.next()) {
+					Aula aula = instantiateAula(rs);
+					AulaDto aulaDto =new  AulaDto(aula);
+					lista.add(aulaDto);
+				}
 
-		        return lista;
-		    } catch (SQLException e) {
-		        System.err.println("SQL Error: " + e.getMessage());
-		    } finally {
-		        closeResultSet(result);
-		        closeStatement(preparedStatement);
+			return lista;
+			}catch (SQLException e) {
+				throw new DbException(e.getMessage());
+			}  finally {
+		        closeResultSet(rs);
+		        closeStatement(ps);
 		    }
-		    return lista;
+	}
+
+	public AulaDto findById(String id) {
+		
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+			String query = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA "
+					+ "WHERE ID = ?";
+			
+			try {
+				ps = connection.prepareStatement(query);
+				ps.setString(1, id);
+				
+				rs = ps.executeQuery();
+				
+				if(rs.next()) {
+					Aula aula = instantiateAula(rs);
+					AulaDto aulaDto = new AulaDto(aula);
+					return aulaDto;
+				}
+				
+				return null;
+				
+			} catch (SQLException e) {
+				throw new DbException(e.getMessage());
+			}
+			finally {
+				closeStatement(ps);
+				closeResultSet(rs);
+			}
 		}
 
-
-		public AulaDto findById(String id) {
-		    PreparedStatement preparedStatement = null;
-		    ResultSet result = null;
-		    String tabela = "SELECT ID, COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO FROM AULA WHERE ID = ?";
-
-		    try {
-		        preparedStatement = connection.prepareStatement(tabela);
-		        preparedStatement.setString(1, id);
-
-		        result = preparedStatement.executeQuery();
-
-		        if (result.next()) {
-		            Aula aula = instantiateAula(result);
-		            AulaDto aulaDto = new AulaDto(aula);
-		            return aulaDto;
-		        }
-
-		        return null;
-
-		    } catch (SQLException e) {
-		        System.err.println("SQL Error: " + e.getMessage());
-		    } finally {
-		        closeResultSet(result);
-		        closeStatement(preparedStatement);
-		    }
-		    return null;
-		}
-
-	
 	public void create(AulaDto dto) {
-		PreparedStatement prepare = null;
-		String tabela = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
+		PreparedStatement pst = null;
+		String query = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
 				+ "VALUES (?,?,?,?,?)";
 		try {
 			 Aula aula = new Aula(dto);
 
-		        prepare = this.connection.prepareStatement(tabela);
+		        pst = this.connection.prepareStatement(query);
 
-		        prepare.setInt(1, aula.getCodDisciplina());
-		        prepare.setString(2, aula.getAssunto());
-		        prepare.setInt(3, aula.getDuracao());
-		        prepare.setString(4, aula.getData());
-		        prepare.setString(5, aula.getHorario());
-		        prepare.execute();
+		        pst.setInt(1, aula.getCodDisciplina());
+		        pst.setString(2, aula.getAssunto());
+		        pst.setInt(3, aula.getDuracao());
+		        pst.setString(4, aula.getData());
+		        pst.setString(5, aula.getHorario());
+		        pst.execute();
 		} catch (SQLException e) {
-			System.err.println("Class not found: " + e.getMessage());
+			throw new DbException(e.getMessage());
 		} finally {
-			closeStatement(prepare);
+			closeStatement(pst);
 		}
 	}
 
-	
 	public void deleteAll() {
-		String tabela = "DELETE FROM AULA";
-		Statement statement = null;
+		String query = "DELETE FROM AULA";
+		Statement st = null;
 		try {
-			statement = this.connection.createStatement();
-			statement.execute(tabela);
+			st = this.connection.createStatement();
+			st.execute(query);
 		} catch (SQLException e) {
 			e.getStackTrace();
-			System.err.println("Class not found: " + e.getMessage());
+			throw new DbException(e.getMessage());
 		}
 		finally {
-			closeStatement(statement);
+			closeStatement(st);
 		}
 	}
 
-	
 	public void delete(String id) {
-		String tabela = "DELETE FROM AULA WHERE ID = ?";
-		PreparedStatement prepare = null;
+		String query = "DELETE FROM AULA WHERE ID = ?";
+		PreparedStatement pst = null;
 		try {
-			prepare = this.connection.prepareStatement(tabela);
-			prepare.setString(1, id);
-			prepare.execute();
+			pst = this.connection.prepareStatement(query);
+			pst.setString(1, id);
+			pst.execute();
 		} catch (SQLException e) {
-			System.err.println("Class not found: " + e.getMessage());
+			throw new DbException(e.getMessage());
 		} finally {
-	        closeStatement(prepare);
+	        closeStatement(pst);
 	    }
 	}
 
-	
 	public void update(AulaDto dto) {
-		PreparedStatement preparedStatement = null;
-		String tabela = "UPDATE AULA SET "
+		PreparedStatement ps = null;
+		String query = "UPDATE AULA SET "
 				+ "COD_DISCIPLINA = ?, ASSUNTO = ?, DURACAO = ?, DATA = ?, HORARIO = ? "
 				+ "WHERE ID = ?";
 		
 		 try {
-		        preparedStatement = this.connection.prepareStatement(tabela);
-		        preparedStatement.setInt(1, Integer.parseInt(dto.codDisciplina)); 
-		        preparedStatement.setString(2, dto.assunto); 
-		        preparedStatement.setInt(3, Integer.parseInt(dto.duracao)); 
-		        preparedStatement.setString(4, dto.data);
-		        preparedStatement.setString(5, dto.horario);
-		        preparedStatement.setString(6, dto.id);
-		        preparedStatement.executeUpdate();
+		        ps = this.connection.prepareStatement(query);
+		        ps.setInt(1, Integer.parseInt(dto.codDisciplina)); 
+		        ps.setString(2, dto.assunto); 
+		        ps.setInt(3, Integer.parseInt(dto.duracao)); 
+		        ps.setString(4, dto.data);
+		        ps.setString(5, dto.horario);
+		        ps.setString(6, dto.id);
+		        ps.executeUpdate();
 		    } catch (SQLException e) {
 		        e.printStackTrace();
-		        System.err.println("Class not found: " + e.getMessage());
+		        throw new DbException(e.getMessage());
 		    } finally {
-		        closeStatement(preparedStatement);
+		        closeStatement(ps);
 		    }
 		}
 	
 	
-	
-		private Aula instantiateAula(ResultSet result) throws SQLException{
+		private Aula instantiateAula(ResultSet rs) throws SQLException{
 			Aula aula = new Aula();
-			aula.setAssunto(result.getString("ASSUNTO"));
-			aula.setCodDisciplina(result.getInt("COD_DISCIPLINA"));
-			aula.setData(result.getString("DATA"));
-			aula.setDuracao(result.getInt("DURACAO"));
-			aula.setHorario(result.getString("HORARIO"));
-			aula.setId(result.getLong("ID"));
+			aula.setAssunto(rs.getString("ASSUNTO"));
+			aula.setCodDisciplina(rs.getInt("COD_DISCIPLINA"));
+			aula.setData(rs.getString("DATA"));
+			aula.setDuracao(rs.getInt("DURACAO"));
+			aula.setHorario(rs.getString("HORARIO"));
+			aula.setId(rs.getLong("ID"));
 			return aula;
 		}
 
-	
 
 		public void reset() {
 			this.deleteAll();
