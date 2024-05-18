@@ -21,7 +21,9 @@
 		
 		<%
 		HttpSession sessao = request.getSession();
+		
 		if (sessao.getAttribute("lista") != null) {
+			
 			ArrayList<AulaDto> lista = (ArrayList<AulaDto>) sessao.getAttribute("lista");
 			for (AulaDto a: lista) {
 				%>
