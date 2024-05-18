@@ -46,7 +46,7 @@ public class Db {
 		}
 	}
 
-	// Inicia a conexão com o banco de dados
+	
 	private void conectar() {
 		try {
 			this.connection = DriverManager.getConnection(this.url, this.user, this.password);
@@ -73,7 +73,7 @@ public class Db {
 		}
 	}
 
-	// Encerra a conexão
+	
 	public void close() {
 		try {
 			this.connection.close();
@@ -82,7 +82,7 @@ public class Db {
 		}
 	}
 	
-	//Para poder encerrar o Statement
+	
 		private static void closeStatement(Statement statement) {
 			if(statement != null) {
 				try {
@@ -93,7 +93,7 @@ public class Db {
 			}
 		}
 		
-		//Para poder encerrar o ResultSet
+		
 		private static void closeResultSet(ResultSet result) {
 			if(result != null) {
 				try {
@@ -104,13 +104,9 @@ public class Db {
 			}
 		}
 
-	/*
-	 * ****************************************************************
-	 * CRUD
-	 * ****************************************************************
-	 */
+	
 
-	// CRUD READ
+	
 		public ArrayList<AulaDto> findAll() {
 		    PreparedStatement preparedStatement = null;
 		    ResultSet result = null;
@@ -165,7 +161,7 @@ public class Db {
 		    return null;
 		}
 
-	// CRUD CREATAE
+	
 	public void create(AulaDto dto) {
 		PreparedStatement prepare = null;
 		String db = "INSERT INTO AULA (COD_DISCIPLINA, ASSUNTO, DURACAO, DATA, HORARIO) "
@@ -188,7 +184,7 @@ public class Db {
 		}
 	}
 
-	// CRUD DELETE
+	
 	public void deleteAll() {
 		String db = "DELETE FROM AULA";
 		Statement statement = null;
@@ -204,7 +200,7 @@ public class Db {
 		}
 	}
 
-	// CRUD DELETE
+	
 	public void delete(String id) {
 		String db = "DELETE FROM AULA WHERE ID = ?";
 		PreparedStatement prepare = null;
@@ -219,7 +215,7 @@ public class Db {
 	    }
 	}
 
-	// CRUD UPDATE
+	
 	public void update(AulaDto dto) {
 		PreparedStatement preparedStatement = null;
 		String db = "UPDATE AULA SET "
@@ -244,7 +240,7 @@ public class Db {
 		}
 	
 	
-	//Método criado para poder instanciar a classe Aula de forma mais organizada, sem ter que fazer isso em cada método
+	
 		private Aula instantiateAula(ResultSet result) throws SQLException{
 			Aula aula = new Aula();
 			aula.setAssunto(result.getString("ASSUNTO"));
@@ -256,9 +252,7 @@ public class Db {
 			return aula;
 		}
 
-	/*
-	 * PARA EFEITO DE TESTES
-	 */
+	
 
 		public void reset() {
 			this.deleteAll();
