@@ -18,11 +18,30 @@
 </nav>
 
 <div class="container-geral">
-    <div class="container-aula-edit" id="msg-id" hidden="hidden">
-        <div class="texto">
-            Erro ao tentar registrar dados
+    <div class="container-aula-edit" id="msg-vazio" hidden="hidden">
+    	<div class="texto">
+    		Por favor, preencha todos os campos.
+    	</div>
+	</div>
+
+ 	<div class="container-aula-edit" id="msg-data" hidden="hidden">
+    	<div class="texto">
+    		DData inválida. Utilize o formato YYYY-MM-DD.
+    	</div>
+	</div>
+		
+	<div class="container-aula-edit" id="msg-horario" hidden="hidden">
+   		<div class="texto">
+            Horário inválido. Utilize o formato HH:MM.
         </div>
-    </div>
+	</div>
+		
+	<div class="container-aula-edit" id="msg-duracao" hidden="hidden">
+    	<div class="texto">
+            Duração inválida. Deve ser um valor positivo.
+        </div>
+	</div>
+    
     <div class="container-aula-edit">
         <div class="container-linha1">
             <div class="info">Data: <input id="data-id" type="date" class="inp-data"></div>
